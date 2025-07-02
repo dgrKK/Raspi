@@ -1,37 +1,38 @@
 import os
 import sys
+import time
 
-# Auto-install missing libraries
+# Try importing required libraries
 try:
     import board
     import busio
     from adafruit_mcp4725 import MCP4725
 except ImportError:
-    print("Installing required libraries...")
-    os.system("pip3 install --upgrade adafruit-circuitpython-mcp4725")
-    os.system("pip3 install --upgrade adafruit-blinka")
+    print("Installing required libraries (with --break-system-packages)...")
+    os.system("pip3 install --break-system-packages --upgrade adafruit-circuitpython-mcp4725 adafruit-blinka")
     os.execv(sys.executable, ['python3'] + sys.argv)
 
-import time
-
-# Set up I2C
+# Initialize I2C bus using Raspberry Pi's default I2C pins
 i2c = busio.I2C(board.SCL, board.SDA)
 
-# Create MCP4725 instance
+# Initialize the MCP4725 DAC
 dac = MCP4725(i2c)
 
-# Set reference voltage (typically 3.3V on Raspberry Pi)
+# Reference voltage for MCP4725 (typically 3.3V on Raspberry Pi)
 vref = 3.3
 
-# Target output voltage (change this value as needed)
-target_voltage = 1.65  # Volts (half of 3.3V)
+# Desired output voltage (change this value as needed, between 0 and vref)
+target_voltage = 1.65  # Volts
 
-# Convert voltage to 12-bit value
-dac_value = int((target_voltage / vref) * 4095)
-dac.normalized_value = target_voltage / vref
+# Set DAC output
+normalized_value = target_voltage / vref
+dac.normalized_value = normalized_value
 
-print(f"Output voltage set to approximately {target_voltage:.2f} V")
+print(f"Voltage output set to approx. {target_voltage:.2f} V (normalized value: {normalized_value:.3f})")
 
-# Keep output stable
-while True:
-    time.sleep(1)
+# Keep the output voltage stable (optional loop)
+try:
+    while True:
+        time.sleep(1)
+except KeyboardInterrupt:
+    print("Exiting...")
