@@ -1,0 +1,159 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyOyq0Qvr6c6mimcR3k7wbqp"
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "id": "jTGoELu_wYfh"
+      },
+      "outputs": [],
+      "source": [
+        "import yfinance as yf"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import pandas as pd"
+      ],
+      "metadata": {
+        "id": "0X3d-DkUH6sZ"
+      },
+      "execution_count": 2,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# print MACD & EMA9\n",
+        "def get_stock_data(ticker, period='3mo', interval='1d'):\n",
+        "    stock = yf.Ticker(ticker)\n",
+        "    df = stock.history(period=period, interval=interval)\n",
+        "    return df\n",
+        "\n",
+        "def calculate_macd(df):\n",
+        "    df['EMA12'] = df['Close'].ewm(span=12, adjust=False).mean()\n",
+        "    df['EMA26'] = df['Close'].ewm(span=26, adjust=False).mean()\n",
+        "    df['MACD'] = df['EMA12'] - df['EMA26']\n",
+        "    df['Signal_Line'] = df['MACD'].ewm(span=9, adjust=False).mean()\n",
+        "    return df\n",
+        "\n",
+        "def calculate_ema9(df):\n",
+        "    df['EMA9'] = df['Close'].ewm(span=9, adjust=False).mean()\n",
+        "    return df\n",
+        "\n",
+        "def main():\n",
+        "    ticker = input(\"Enter stock ticker (e.g., AAPL, MSFT, TSLA): \").upper()\n",
+        "\n",
+        "    try:\n",
+        "        df = get_stock_data(ticker)\n",
+        "        if df.empty:\n",
+        "            print(\"No data found for ticker:\", ticker)\n",
+        "            return\n",
+        "\n",
+        "        df = calculate_macd(df)\n",
+        "        df = calculate_ema9(df)\n",
+        "\n",
+        "        # Show the last 5 rows\n",
+        "        print(\"\\n--- Latest MACD and EMA9 values ---\")\n",
+        "        print(df[['Close', 'EMA9', 'MACD', 'Signal_Line']].tail())\n",
+        "    except Exception as e:\n",
+        "        print(\"Error:\", str(e))\n",
+        "\n",
+        "if __name__ == \"__main__\":\n",
+        "    main()"
+      ],
+      "metadata": {
+        "id": "i9ESrqzZIHLT"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# plot EMA9 and close price & MACD and signal line\n",
+        "import yfinance as yf\n",
+        "import pandas as pd\n",
+        "import matplotlib.pyplot as plt\n",
+        "\n",
+        "def get_stock_data(ticker, period='3mo', interval='1d'):\n",
+        "    stock = yf.Ticker(ticker)\n",
+        "    df = stock.history(period=period, interval=interval)\n",
+        "    return df\n",
+        "\n",
+        "def calculate_indicators(df):\n",
+        "    df['EMA12'] = df['Close'].ewm(span=12, adjust=False).mean()\n",
+        "    df['EMA26'] = df['Close'].ewm(span=26, adjust=False).mean()\n",
+        "    df['MACD'] = df['EMA12'] - df['EMA26']\n",
+        "    df['Signal_Line'] = df['MACD'].ewm(span=9, adjust=False).mean()\n",
+        "    df['EMA9'] = df['Close'].ewm(span=9, adjust=False).mean()\n",
+        "    return df\n",
+        "\n",
+        "def plot_indicators(df, ticker):\n",
+        "    plt.figure(figsize=(14, 8))\n",
+        "\n",
+        "    # Price and EMA9\n",
+        "    plt.subplot(2, 1, 1)\n",
+        "    plt.plot(df.index, df['Close'], label='Close Price', color='blue')\n",
+        "    plt.plot(df.index, df['EMA9'], label='EMA9', color='orange')\n",
+        "    plt.title(f'{ticker} Close Price and EMA9')\n",
+        "    plt.xlabel('Date')\n",
+        "    plt.ylabel('Price')\n",
+        "    plt.legend()\n",
+        "    plt.grid(True)\n",
+        "\n",
+        "    # MACD and Signal Line\n",
+        "    plt.subplot(2, 1, 2)\n",
+        "    plt.plot(df.index, df['MACD'], label='MACD', color='green')\n",
+        "    plt.plot(df.index, df['Signal_Line'], label='Signal Line', color='red')\n",
+        "    plt.title(f'{ticker} MACD and Signal Line')\n",
+        "    plt.xlabel('Date')\n",
+        "    plt.ylabel('MACD')\n",
+        "    plt.legend()\n",
+        "    plt.grid(True)\n",
+        "\n",
+        "    plt.tight_layout()\n",
+        "    plt.show()\n",
+        "\n",
+        "def main():\n",
+        "    ticker = input(\"Enter stock ticker (e.g., AAPL, MSFT, TSLA): \").upper()\n",
+        "\n",
+        "    try:\n",
+        "        df = get_stock_data(ticker)\n",
+        "        if df.empty:\n",
+        "            print(\"No data found for ticker:\", ticker)\n",
+        "            return\n",
+        "\n",
+        "        df = calculate_indicators(df)\n",
+        "        plot_indicators(df, ticker)\n",
+        "\n",
+        "    except Exception as e:\n",
+        "        print(\"Error:\", str(e))\n",
+        "\n",
+        "if __name__ == \"__main__\":\n",
+        "    main()"
+      ],
+      "metadata": {
+        "id": "WVqwKjfHJPTR"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
