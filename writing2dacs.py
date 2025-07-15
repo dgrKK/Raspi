@@ -1,4 +1,4 @@
-import smbus
+import smbus2
 import time
 
 # I2C addresses of the two DACs
@@ -6,7 +6,7 @@ DAC1_ADDR = 0x60  # A0 pin to GND
 DAC2_ADDR = 0x61  # A0 pin to VCC
 
 # Create I2C bus object
-bus = smbus.SMBus(1)
+bus = smbus2.SMBus(2)
 
 def write_dac(address, value):
     """Writes a 12-bit value to the DAC."""
