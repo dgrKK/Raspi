@@ -38,7 +38,7 @@ def write_dac(address, value, bus):
     except Exception as e:
         print(f"Error writing to DAC at 0x{address:X}: {e}")
 
-def write_voltage_to_pin(channel, voltage):
+def write_voltage_to_pin(bus, channel, voltage):
     """
     Write the given voltage to the specified DAC channel.
     Converts voltage to 12-bit DAC value (assuming 5V reference).
@@ -107,8 +107,8 @@ def read_output_voltage(bus):
 for v2 in v2_values:
     # Write voltages to hardware
     bus = smbus.SMBus(1)
-    write_voltage_to_pin(channel='v1_pin', voltage=v1_fixed, bus)
-    write_voltage_to_pin(channel='v2_pin', voltage=v2, bus)
+    write_voltage_to_pin(bus, channel='v1_pin', voltage=v1_fixed)
+    write_voltage_to_pin(bus, channel='v2_pin', voltage=v2)
     
     # Read output from hardware
    
