@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import smbus2
+import smbus
 import time
 
 # Constants
@@ -59,14 +60,50 @@ def write_voltage_to_pin(channel, voltage):
     else:
         raise ValueError(f"Unknown channel: {channel}")
 
-def read_output_voltage():
-    """
-    Read the output voltage from a GPIO pin.
-    Replace this with actual ADC or digital read logic.
-    Returns a float (simulated or real read value).
-    """
-    # Placeholder: returning a mock value for testing
-    return 0.0
+def read_output_voltage(smbus):
+
+    ADS1115_ADDR = 0x48
+    
+
+    # Register addresses
+    POINTER_CONVERT = 0x00
+    POINTER_CONFIG = 0x01
+
+    # PGA setting for ±4.096V full-scale range
+    GAIN_4_096V = 0x0200  # LSB size = 125 µV
+
+    # Single-ended input on AIN0 (MUX = 100)
+    MUX_SINGLE_AIN0 = 0x4000
+
+    # Other config bits
+    MODE_SINGLE = 0x0100
+    DATA_RATE = 0x0080
+    COMP_DISABLE = 0x0003
+    OS_SINGLE = 0x8000
+    bus = smbus.SMBus(1)
+
+# Combine configuration
+    CONFIG = (OS_SINGLE | MUX_SINGLE_AIN0 | GAIN_4_096V |
+          MODE_SINGLE | DATA_RATE | COMP_DISABLE)
+    config_bytes = [(CONFIG >> 8) & 0xFF, CONFIG & 0xFF]
+    bus.write_i2c_block_data(ADS1115_ADDR, POINTER_CONFIG, config_bytes)
+
+    # Wait for conversion (minimum 1ms, we use 10ms)
+    time.sleep(0.01)
+
+    # Read conversion result
+    result = bus.read_i2c_block_data(ADS1115_ADDR, POINTER_CONVERT, 2)
+    raw = (result[0] << 8) | result[1]
+    
+    # Handle two's complement
+    if raw > 0x7FFF:
+        raw -= 0x10000
+
+    # Convert to voltage (LSB = 125uV for ±4.096V)
+    voltage = raw * 4.096 / 32768.0
+     
+    return raw 
+
 
 # Main sweep loop
 for v2 in v2_values:
@@ -75,7 +112,8 @@ for v2 in v2_values:
     write_voltage_to_pin(channel='v2_pin', voltage=v2)
     
     # Read output from hardware
-    measured_output = read_output_voltage()
+    bus = smbus.SMBus(1)
+    measured_output = read_output_voltage(bus)
     output_readings.append(measured_output)
 
 # Plotting
