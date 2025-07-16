@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import smbus2
 import smbus
 import time
 
@@ -15,7 +14,7 @@ DAC1_ADDR = 0x60  # A0 pin to GND
 DAC2_ADDR = 0x61  # A0 pin to VCC
 
 # Create I2C bus object
-bus = smbus2.SMBus(2)
+bus = smbus.SMBus(2)
 
 # Generate sweep values
 v2_values = np.arange(v2_start, v2_end + step, step)
