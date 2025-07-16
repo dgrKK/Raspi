@@ -14,7 +14,7 @@ DAC1_ADDR = 0x60  # A0 pin to GND
 DAC2_ADDR = 0x61  # A0 pin to VCC
 
 # Create I2C bus object
-bus = smbus.SMBus(2)
+bus = smbus.SMBus(1)
 
 # Generate sweep values
 v2_values = np.arange(v2_start, v2_end + step, step)
@@ -24,7 +24,7 @@ v_diff = v2_values - v1_values  # should be same as v2_values
 # Placeholder for output readings
 output_readings = []
 
-def write_dac(address, value):
+def write_dac(address, value, bus):
     """Writes a 12-bit value to the DAC."""
     if not 0 <= value <= 4095:
         raise ValueError("Value must be between 0 and 4095")
@@ -53,13 +53,13 @@ def write_voltage_to_pin(channel, voltage):
     
     # Map channel names to DAC addresses
     if channel == 'v1_pin':
-        write_dac(DAC1_ADDR, dac_value)
+        write_dac(DAC1_ADDR, dac_value, bus)
     elif channel == 'v2_pin':
-        write_dac(DAC2_ADDR, dac_value)
+        write_dac(DAC2_ADDR, dac_value, bus)
     else:
         raise ValueError(f"Unknown channel: {channel}")
 
-def read_output_voltage(smbus):
+def read_output_voltage(bus):
 
     ADS1115_ADDR = 0x48
     
@@ -78,10 +78,9 @@ def read_output_voltage(smbus):
     MODE_SINGLE = 0x0100
     DATA_RATE = 0x0080
     COMP_DISABLE = 0x0003
-    OS_SINGLE = 0x8000
-    bus = smbus.SMBus(1)
+    OS_SINGLE = 0x8000   
 
-# Combine configuration
+    # Combine configuration
     CONFIG = (OS_SINGLE | MUX_SINGLE_AIN0 | GAIN_4_096V |
           MODE_SINGLE | DATA_RATE | COMP_DISABLE)
     config_bytes = [(CONFIG >> 8) & 0xFF, CONFIG & 0xFF]
@@ -107,11 +106,12 @@ def read_output_voltage(smbus):
 # Main sweep loop
 for v2 in v2_values:
     # Write voltages to hardware
-    write_voltage_to_pin(channel='v1_pin', voltage=v1_fixed)
-    write_voltage_to_pin(channel='v2_pin', voltage=v2)
+    bus = smbus.SMBus(1)
+    write_voltage_to_pin(channel='v1_pin', voltage=v1_fixed, bus)
+    write_voltage_to_pin(channel='v2_pin', voltage=v2, bus)
     
     # Read output from hardware
-    bus = smbus.SMBus(1)
+   
     measured_output = read_output_voltage(bus)
     output_readings.append(measured_output)
 
