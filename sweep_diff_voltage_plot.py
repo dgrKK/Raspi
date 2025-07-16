@@ -111,6 +111,7 @@ for v2 in v2_values:
     write_voltage_to_pin(bus, channel='v2_pin', voltage=v2)
     
     # Read output from hardware
+    time.sleep(0.5) 
    
     measured_output = read_output_voltage(bus)
     output_readings.append(measured_output)
