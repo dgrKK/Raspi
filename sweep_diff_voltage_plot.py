@@ -46,6 +46,7 @@ def write_voltage_to_pin(bus, channel, voltage):
     # Convert voltage to 12-bit DAC value (0-4095)
     # Assuming 5V reference voltage
     v_ref = 5.0
+    print(voltage)
     dac_value = int((voltage / v_ref) * 4095)
     
     # Clamp to valid range
